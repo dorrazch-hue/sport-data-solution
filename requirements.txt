@@ -1,0 +1,36 @@
+# =============================================================
+# Sport Data Solution — Dépendances Python
+# Installation : pip install -r requirements.txt
+# =============================================================
+
+# Base de données
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+alembic==1.14.0
+
+# Manipulation de données
+pandas==2.2.3
+openpyxl==3.1.5
+numpy==2.2.0
+
+# Validation qualité
+
+# Google Maps (distance domicile ↔ bureau)
+googlemaps==4.10.0
+
+# Slack
+slack-sdk==3.33.4
+
+# Apache Airflow
+
+# Variables d'environnement
+python-dotenv==1.0.1
+
+# Calcul géographique (fallback haversine si pas de clé Google Maps)
+geopy==2.4.1
+
+# Utilitaires
+faker==33.1.0
+pytz==2024.2
+tqdm==4.67.1
+colorlog==6.9.0

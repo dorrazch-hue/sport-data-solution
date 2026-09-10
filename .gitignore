@@ -1,0 +1,49 @@
+# Environnement — CRITIQUE : ne jamais committer
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+logs/
+*.log
+
+# Great Expectations
+great_expectations/uncommitted/
+
+# Airflow
+airflow/logs/
+airflow/plugins/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Données sensibles (RH)
+data/raw/*.xlsx
+data/raw/*.csv
+data/processed/
+
+# Secrets
+*.pem
+*.key

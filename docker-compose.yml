@@ -1,0 +1,177 @@
+version: '3.8'
+
+# =============================================================
+# Sport Data Solution — Infrastructure Docker
+# Lancement : docker-compose up -d
+# pgAdmin disponible sur : http://localhost:5050
+# =============================================================
+
+services:
+
+  # --- PostgreSQL : base de données principale ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: sport_data_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sport_data}
+      POSTGRES_USER: ${DB_USER:-sport_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sport_user} -d ${DB_NAME:-sport_data}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sport_network
+
+  # --- pgAdmin : interface web pour gérer PostgreSQL ---
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: sport_data_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@sportdata.fr}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeme_pgadmin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sport_network
+
+  # --- Airflow : orchestration du pipeline ---
+  airflow-webserver:
+    image: apache/airflow:2.10.3
+    container_name: sport_data_airflow_webserver
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:-airflow_password}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+      # Variables du pipeline injectées dans Airflow
+      AIRFLOW_VAR_DB_HOST: postgres
+      AIRFLOW_VAR_DB_PORT: '5432'
+      AIRFLOW_VAR_DB_NAME: ${DB_NAME:-sport_data}
+      AIRFLOW_VAR_DB_USER: ${DB_USER:-sport_user}
+      AIRFLOW_VAR_DB_PASSWORD: ${DB_PASSWORD:-changeme_password}
+      AIRFLOW_VAR_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      AIRFLOW_VAR_SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      AIRFLOW_VAR_SLACK_CHANNEL: ${SLACK_CHANNEL:-#sport-activites}
+      AIRFLOW_VAR_SPORT_BONUS_RATE: '0.05'
+      AIRFLOW_VAR_WELLNESS_DAYS_THRESHOLD: '15'
+      AIRFLOW_VAR_WELLNESS_DAYS_COUNT: '5'
+      AIRFLOW_VAR_MAX_DISTANCE_WALKING_KM: '15.0'
+      AIRFLOW_VAR_MAX_DISTANCE_CYCLING_KM: '25.0'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - airflow_logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - sport_network
+
+  airflow-scheduler:
+    image: apache/airflow:2.10.3
+    container_name: sport_data_airflow_scheduler
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:-airflow_password}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - airflow_logs:/opt/airflow/logs
+    command: scheduler
+    networks:
+      - sport_network
+
+  airflow-init:
+    image: apache/airflow:2.10.3
+    container_name: sport_data_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:-airflow_password}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    entrypoint: /bin/bash
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+    networks:
+      - sport_network
+    user: "0:0"
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@sportdata.fr
+      "
+
+  # --- Metabase : dashboard BI ---
+  metabase:
+    image: metabase/metabase:latest
+    container_name: sport_data_metabase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${DB_NAME:-sport_data}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${DB_USER:-sport_user}
+      MB_DB_PASS: ${DB_PASSWORD:-changeme_password}
+      MB_DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sport_network
+
+networks:
+  sport_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  airflow_logs:

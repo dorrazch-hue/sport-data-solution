@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Sport Data Solution",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "sport_data",
+      "Username": "sport_user",
+      "SSLMode": "prefer",
+      "Comment": "Base de données principale du projet Sport Data Solution"
+    }
+  }
+}
