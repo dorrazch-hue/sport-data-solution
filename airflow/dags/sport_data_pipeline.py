@@ -5,9 +5,9 @@ Orchestre automatiquement l'ensemble du pipeline de données.
 Programmé pour s'exécuter chaque jour à 6h00.
 
 Ordre des tâches :
-  ingest_rh → validate_commutes → generate_activities
-                                         ↓
-                          compute_benefits → quality_tests → slack_notifications
+  init_db → ingest_rh → validate_commutes → generate_activities
+                                                   ↓
+                                    compute_benefits → quality_tests → slack_notifications
 
 Accès au DAG :
   Airflow UI → http://localhost:8080
@@ -48,12 +48,13 @@ dag = DAG(
 Ce DAG orchestre le pipeline complet de données pour le POC avantages sportifs.
 
 ### Étapes
-1. **ingest_rh** : Charge les données RH et sportives en base PostgreSQL
-2. **validate_commutes** : Valide les trajets domicile-bureau (Google Maps ou Haversine)
-3. **generate_activities** : Génère les activités sportives simulées (12 mois)
-4. **compute_benefits** : Calcule les avantages (prime 5%, jours bien-être)
-5. **quality_tests** : Tests de cohérence et d'intégrité des données
-6. **slack_notifications** : Envoie les notifications Slack pour les nouvelles activités
+1. **init_db** : Initialise le schéma de la base de données (tables, contraintes)
+2. **ingest_rh** : Charge les données RH et sportives en base PostgreSQL
+3. **validate_commutes** : Valide les trajets domicile-bureau (Google Maps ou Haversine)
+4. **generate_activities** : Génère les activités sportives simulées (12 mois)
+5. **compute_benefits** : Calcule les avantages (prime 5%, jours bien-être)
+6. **quality_tests** : Tests de cohérence et d'intégrité des données
+7. **slack_notifications** : Envoie les notifications Slack pour les nouvelles activités
 
 ### Paramètres modifiables (Airflow Variables)
 - `SPORT_BONUS_RATE` : Taux de la prime sportive (défaut : 0.05)
@@ -66,6 +67,20 @@ Ce DAG orchestre le pipeline complet de données pour le POC avantages sportifs.
 # =============================================================
 # Fonctions Python pour chaque tâche
 # =============================================================
+
+def task_init_db(**context):
+    """Initialisation du schéma de la base de données."""    import sys
+    sys.path.insert(0, "/opt/airflow")
+
+    from src.database.init_db import init_db
+    run_id = context["run_id"]
+
+    result = init_db(run_id=run_id) if callable(getattr(__import__('inspect'), 'signature', None)) else init_db()
+    # init_db peut retourner None ou un dict
+    if isinstance(result, dict) and result.get("status") == "failed":
+        raise Exception(f"Initialisation BDD échouée : {result.get('error', 'unknown')}")
+    return result or {"status": "success"}
+
 
 def task_ingest_rh(**context):
     """Ingestion des données RH et sportives."""
@@ -193,6 +208,11 @@ with dag:
 
     start = EmptyOperator(task_id="start")
 
+    init_db = PythonOperator(
+        task_id="init_db",
+        python_callable=task_init_db,
+    )
+
     ingest = PythonOperator(
         task_id="ingest_rh",
         python_callable=task_ingest_rh,
@@ -229,6 +249,10 @@ with dag:
     # Chaîne de dépendances
     # ──────────────────────────────────────────
     #
+    #         start
+    #           |
+    #         init_db
+    #           |
     #         ingest_rh
     #         /       \
     #    validate   generate
@@ -241,7 +265,7 @@ with dag:
     #             |
     #            end
     #
-    start >> ingest
+    start >> init_db >> ingest
     ingest >> [validate, generate]
     [validate, generate] >> compute
     compute >> quality
