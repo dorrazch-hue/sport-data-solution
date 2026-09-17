@@ -285,13 +285,53 @@ Tous les seuils sont modifiables dans `.env` **sans toucher au code** :
 
 ## Visualisation Metabase
 
-Metabase est inclus dans le docker-compose (port 3000).  
-Dashboard **"Sport Data Solution — KPIs"** avec 4 graphiques :
+Metabase est inclus dans le docker-compose (port 3000).
 
-- **Éligibilité prime sportive** — répartition éligibles/non éligibles (Benefits Calculations)
-- **Activités sportives par type** — top sports pratiqués (Sport Activities)
-- **Total primes versées** — montant par éligibilité (Benefits Calculations)
-- **Employés par Business Unit** — répartition des salariés par département (Employees)
+**Première connexion :** http://localhost:3000 → créer un compte admin → connecter la base `sport_data` (host: `postgres`, port: `5432`).
+
+### Créer les 4 graphiques du dashboard
+
+Copier-coller chaque requête dans **New Question → Native Query** :
+
+**1. Éligibilité prime sportive**
+```sql
+SELECT
+  CASE WHEN eligible_sport_bonus THEN 'Éligible ✅' ELSE 'Non éligible ❌' END AS statut,
+  COUNT(*) AS nb_salaries,
+  ROUND(SUM(sport_bonus_amount)::numeric, 2) AS montant_total_eur
+FROM benefits_calculations
+WHERE calculation_year = EXTRACT(YEAR FROM CURRENT_DATE)
+GROUP BY eligible_sport_bonus
+ORDER BY eligible_sport_bonus DESC;
+```
+
+**2. Activités sportives par type**
+```sql
+SELECT sport_type, COUNT(*) AS nb_activites
+FROM sport_activities
+GROUP BY sport_type
+ORDER BY nb_activites DESC;
+```
+
+**3. Impact financier total**
+```sql
+SELECT
+  SUM(sport_bonus_amount)          AS total_primes_eur,
+  SUM(total_cost_company)          AS cout_total_entreprise_eur,
+  COUNT(*) FILTER (WHERE eligible_sport_bonus)    AS nb_primes,
+  COUNT(*) FILTER (WHERE eligible_wellness_days)  AS nb_jours_bien_etre
+FROM benefits_calculations
+WHERE calculation_year = EXTRACT(YEAR FROM CURRENT_DATE);
+```
+
+**4. Activités récentes (dont live)**
+```sql
+SELECT e.first_name, e.last_name, a.sport_type, a.activity_start, a.is_live
+FROM sport_activities a
+JOIN employees e ON e.employee_id = a.employee_id
+ORDER BY a.activity_start DESC
+LIMIT 20;
+```
 
 Accès : [http://localhost:3000](http://localhost:3000)
 

@@ -138,12 +138,13 @@ def compute_sport_bonus(
 
     # Éligible
     bonus_amount = round(gross_salary * SPORT_BONUS_RATE, 2)
+    dist_txt = f"{commute_distance:.1f} km" if commute_distance is not None else "distance non géocodable"
     return {
         "eligible": True,
         "amount": bonus_amount,
         "reason": (
             f"Mode de déplacement sportif '{employee.commute_mode}' validé "
-            f"(distance : {commute_distance:.1f} km) — prime de {SPORT_BONUS_RATE*100:.0f}% appliquée."
+            f"({dist_txt}) — prime de {SPORT_BONUS_RATE*100:.0f}% appliquée."
         ),
         "commute_is_valid": commute_validation.is_valid,
         "commute_distance_km": commute_distance,

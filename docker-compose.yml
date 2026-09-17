@@ -78,11 +78,6 @@ services:
       AIRFLOW_VAR_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
       AIRFLOW_VAR_SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
       AIRFLOW_VAR_SLACK_CHANNEL: ${SLACK_CHANNEL:-#sport-activites}
-      AIRFLOW_VAR_SPORT_BONUS_RATE: '0.05'
-      AIRFLOW_VAR_WELLNESS_DAYS_THRESHOLD: '15'
-      AIRFLOW_VAR_WELLNESS_DAYS_COUNT: '5'
-      AIRFLOW_VAR_MAX_DISTANCE_WALKING_KM: '15.0'
-      AIRFLOW_VAR_MAX_DISTANCE_CYCLING_KM: '25.0'
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./src:/opt/airflow/src
@@ -123,11 +118,6 @@ services:
       AIRFLOW_VAR_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
       AIRFLOW_VAR_SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
       AIRFLOW_VAR_SLACK_CHANNEL: ${SLACK_CHANNEL:-#sport-activites}
-      AIRFLOW_VAR_SPORT_BONUS_RATE: '0.05'
-      AIRFLOW_VAR_WELLNESS_DAYS_THRESHOLD: '15'
-      AIRFLOW_VAR_WELLNESS_DAYS_COUNT: '5'
-      AIRFLOW_VAR_MAX_DISTANCE_WALKING_KM: '15.0'
-      AIRFLOW_VAR_MAX_DISTANCE_CYCLING_KM: '25.0'
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./src:/opt/airflow/src
@@ -160,11 +150,14 @@ services:
     networks:
       - sport_network
     user: "0:0"
-    command: >
-      bash -c "
+    command:
+      - -c
+      - |
         airflow db migrate &&
-        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@sportdata.fr
-      "
+        airflow users create \
+          --username admin --password admin \
+          --firstname Admin --lastname User \
+          --role Admin --email admin@sportdata.fr
 
   # --- Metabase : dashboard BI ---
   metabase:

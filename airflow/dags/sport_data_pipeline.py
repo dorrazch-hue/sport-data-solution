@@ -136,6 +136,16 @@ def task_compute_benefits(**context):
     import sys
     sys.path.insert(0, "/opt/airflow")
 
+    # Lire les paramètres métier depuis Airflow Variables (modifiables dans l'UI sans redéploiement)
+    from airflow.models import Variable
+    import src.transformation.compute_benefits as cb_module
+
+    cb_module.SPORT_BONUS_RATE = float(Variable.get("SPORT_BONUS_RATE", default_var="0.05"))
+    cb_module.WELLNESS_DAYS_THRESHOLD = int(Variable.get("WELLNESS_DAYS_THRESHOLD", default_var="15"))
+    cb_module.WELLNESS_DAYS_COUNT = int(Variable.get("WELLNESS_DAYS_COUNT", default_var="5"))
+    cb_module.MAX_DISTANCE_WALKING_KM = float(Variable.get("MAX_DISTANCE_WALKING_KM", default_var="15.0"))
+    cb_module.MAX_DISTANCE_CYCLING_KM = float(Variable.get("MAX_DISTANCE_CYCLING_KM", default_var="25.0"))
+
     from src.transformation.compute_benefits import run_computation
     run_id = context["run_id"]
 
