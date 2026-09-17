@@ -50,3 +50,6 @@ data/processed/
 *.pyc
 node_modules/
 Claude outputs/
+
+# Artefact git filter-branch (nettoyage historique)
+.git-rewrite/

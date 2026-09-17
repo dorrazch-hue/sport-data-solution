@@ -30,7 +30,7 @@ sport-data-solution/
 │   ├── transformation/
 │   │   └── compute_benefits.py ← Calcul primes et jours bien-être
 │   ├── quality/
-│   │   └── data_quality.py     ← Tests d'intégrité (18 tests)
+│   │   └── data_quality.py     ← Tests d'intégrité (19 tests)
 │   └── notifications/
 │       └── slack_notifier.py   ← Messages Slack par activité
 ├── pipeline/
@@ -68,7 +68,7 @@ sport-data-solution/
   4. Calcul avantages → benefits_calculations
      (prime 5% + jours bien-être)
         ↓
-  5. Tests qualité (18 tests sur 4 tables)
+  5. Tests qualité (19 tests sur 4 tables)
         ↓
   6. Notifications Slack (par activité sportive)
         ↓
@@ -183,6 +183,44 @@ python -m src.notifications.slack_notifier --live --employee-id 35731 --sport Ra
 
 ---
 
+---
+
+## Scénario de démo — Soutenance
+
+### 1. Changer le taux de prime à la volée (sans toucher au code)
+
+**Dans l'interface Airflow** (http://localhost:8080) :
+
+1. Admin → Variables → `SPORT_BONUS_RATE` → modifier la valeur (ex : `0.07` pour 7%)
+2. Déclencher manuellement le DAG : bouton ▶ → seulement l'étape `compute_benefits`
+
+**En ligne de commande (alternatif)** :
+```bash
+# Dans .env, changer SPORT_BONUS_RATE=0.07, puis :
+python pipeline/run_pipeline.py --only compute
+```
+
+3. Ouvrir Metabase (http://localhost:3000) → les montants de primes sont mis à jour instantanément.
+
+### 2. Injecter une nouvelle activité sportive et voir la notification Slack
+
+```bash
+# Simulation d'un salarié qui rentre son activité Strava en temps réel
+python -m src.notifications.slack_notifier --live --employee-id 43015 --sport Vélo/Trottinette/Autres
+```
+
+→ Message Slack envoyé sur `#sport-activites` (ou affiché dans les logs en dry-run).  
+→ Activité visible dans Metabase (table `sport_activities`, colonne `is_live = true`).
+
+### 3. Vérification qualité des données
+
+```bash
+python pipeline/run_pipeline.py --only quality
+```
+
+→ 19 tests exécutés sur 4 tables, résultats dans `pipeline_runs`.
+
+
 ## Configuration des APIs (optionnel)
 
 ### Google Maps API
@@ -233,7 +271,7 @@ Tous les seuils sont modifiables dans `.env` **sans toucher au code** :
 
 ## Tests de qualité
 
-18 tests automatisés couvrent 4 tables :
+19 tests automatisés couvrent 4 tables :
 
 **employees** (6 tests) : unicité IDs, salaires positifs, modes de déplacement valides, noms non vides, types de contrat, dates d'embauche
 
