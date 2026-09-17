@@ -72,7 +72,7 @@ sport-data-solution/
         ↓
   6. Notifications Slack (par activité sportive)
         ↓
-  [Power BI] — Visualisation KPIs
+  [Metabase] — Visualisation KPIs
 ```
 
 ---
@@ -88,7 +88,7 @@ sport-data-solution/
 ### 1. Cloner le projet
 
 ```bash
-git clone https://github.com/votre-org/sport-data-solution.git
+git clone https://github.com/dorrazch-hue/sport-data-solution.git
 cd sport-data-solution
 ```
 
@@ -245,20 +245,17 @@ Tous les seuils sont modifiables dans `.env` **sans toucher au code** :
 
 ---
 
-## Visualisation Power BI
+## Visualisation Metabase
 
-Connecter Power BI à PostgreSQL :
-- Serveur : `localhost:5432`
-- Base : `sport_data`
-- Utilisateur / Mot de passe : voir `.env`
+Metabase est inclus dans le docker-compose (port 3000).  
+Dashboard **"Sport Data Solution — KPIs"** avec 4 graphiques :
 
-KPIs recommandés :
-- Coût total primes sportives (€)
-- Coût total jours bien-être (€)
-- Nombre de salariés éligibles par avantage
-- Répartition par BU
-- Activités sportives par mois (courbe)
-- Anomalies trajets (tableau)
+- **Éligibilité prime sportive** — répartition éligibles/non éligibles (Benefits Calculations)
+- **Activités sportives par type** — top sports pratiqués (Sport Activities)
+- **Total primes versées** — montant par éligibilité (Benefits Calculations)
+- **Employés par Business Unit** — répartition des salariés par département (Employees)
+
+Accès : [http://localhost:3000](http://localhost:3000)
 
 ---
 

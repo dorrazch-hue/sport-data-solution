@@ -1,0 +1,32 @@
+# =============================================================
+# Dépendances EXTRA pour le conteneur Airflow personnalisé.
+# Ne PAS inclure sqlalchemy, pandas, numpy, alembic :
+# Airflow 2.10.3 les gère avec ses propres contraintes de version.
+# Pour le développement local, utiliser requirements.txt complet.
+# =============================================================
+
+# Connecteur PostgreSQL
+psycopg2-binary==2.9.10
+
+# Lecture des fichiers Excel (données RH/sportives)
+openpyxl==3.1.5
+
+# Google Maps (calcul distance domicile ↔ bureau)
+googlemaps==4.10.0
+
+# Notifications Slack
+slack-sdk==3.33.4
+
+# Variables d'environnement (.env en local)
+python-dotenv==1.0.1
+
+# Calcul géographique (fallback Haversine)
+geopy==2.4.1
+
+# Génération de données simulées
+faker==33.1.0
+
+# Utilitaires
+pytz==2024.2
+tqdm==4.67.1
+colorlog==6.9.0

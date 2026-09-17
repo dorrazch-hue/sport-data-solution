@@ -27,12 +27,19 @@ SPORT_FILE = RAW_DATA_DIR / "donnees_sportives.xlsx"
 
 # =============================================================
 # Base de données PostgreSQL
+# Dans Airflow, les variables sont exposées sous AIRFLOW_VAR_*
+# On les lit en priorité pour que les tâches DAG pointent vers "postgres"
+# et non vers "localhost" (qui ne résout rien dans le réseau Docker).
 # =============================================================
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_NAME = os.getenv("DB_NAME", "sport_data")
-DB_USER = os.getenv("DB_USER", "sport_user")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "changeme_password")
+def _get_env(key: str, default: str) -> str:
+    """Lit d'abord la variable directe, sinon le préfixe AIRFLOW_VAR_."""
+    return os.getenv(key) or os.getenv(f"AIRFLOW_VAR_{key}", default)
+
+DB_HOST = _get_env("DB_HOST", "localhost")
+DB_PORT = int(_get_env("DB_PORT", "5432"))
+DB_NAME = _get_env("DB_NAME", "sport_data")
+DB_USER = _get_env("DB_USER", "sport_user")
+DB_PASSWORD = _get_env("DB_PASSWORD", "changeme_password")
 
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
@@ -40,9 +47,9 @@ DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_POR
 # =============================================================
 # APIs externes
 # =============================================================
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "")
-SLACK_CHANNEL = os.getenv("SLACK_CHANNEL", "#sport-activites")
+GOOGLE_MAPS_API_KEY = _get_env("GOOGLE_MAPS_API_KEY", "")
+SLACK_BOT_TOKEN = _get_env("SLACK_BOT_TOKEN", "")
+SLACK_CHANNEL = _get_env("SLACK_CHANNEL", "#sport-activites")
 
 
 # =============================================================
@@ -50,23 +57,20 @@ SLACK_CHANNEL = os.getenv("SLACK_CHANNEL", "#sport-activites")
 # =============================================================
 
 # Prime sportive : taux appliqué au salaire brut annuel
-SPORT_BONUS_RATE = float(os.getenv("SPORT_BONUS_RATE", "0.05"))
+SPORT_BONUS_RATE = float(_get_env("SPORT_BONUS_RATE", "0.05"))
 
 # Jours bien-être : nombre d'activités minimum pour être éligible
-WELLNESS_DAYS_THRESHOLD = int(os.getenv("WELLNESS_DAYS_THRESHOLD", "15"))
+WELLNESS_DAYS_THRESHOLD = int(_get_env("WELLNESS_DAYS_THRESHOLD", "15"))
 
 # Jours bien-être : nombre de jours accordés
-WELLNESS_DAYS_COUNT = int(os.getenv("WELLNESS_DAYS_COUNT", "5"))
+WELLNESS_DAYS_COUNT = int(_get_env("WELLNESS_DAYS_COUNT", "5"))
 
 # Adresse de l'entreprise (référence pour validation des trajets)
-COMPANY_ADDRESS = os.getenv(
-    "COMPANY_ADDRESS",
-    "1362 Av. des Platanes, 34970 Lattes, France"
-)
+COMPANY_ADDRESS = _get_env("COMPANY_ADDRESS", "1362 Av. des Platanes, 34970 Lattes, France")
 
 # Distance maximale autorisée selon mode de transport (km)
-MAX_DISTANCE_WALKING_KM = float(os.getenv("MAX_DISTANCE_WALKING_KM", "15.0"))
-MAX_DISTANCE_CYCLING_KM = float(os.getenv("MAX_DISTANCE_CYCLING_KM", "25.0"))
+MAX_DISTANCE_WALKING_KM = float(_get_env("MAX_DISTANCE_WALKING_KM", "15.0"))
+MAX_DISTANCE_CYCLING_KM = float(_get_env("MAX_DISTANCE_CYCLING_KM", "25.0"))
 
 
 # =============================================================

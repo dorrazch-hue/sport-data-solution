@@ -47,3 +47,6 @@ data/processed/
 # Secrets
 *.pem
 *.key
+*.pyc
+node_modules/
+Claude outputs/

@@ -72,13 +72,17 @@ def init_db() -> None:
     )
 
     if not test_connection(engine):
-        sys.exit(1)
+        raise RuntimeError(
+            f"Impossible de se connecter à PostgreSQL ({DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}). "
+            "Vérifiez que le conteneur Docker est démarré : docker-compose up -d"
+        )
 
     create_all_tables(engine)
 
     logger.info("=" * 60)
     logger.info("✅ Base de données initialisée avec succès")
     logger.info("=" * 60)
+    return {"status": "success"}
 
 
 def get_engine():

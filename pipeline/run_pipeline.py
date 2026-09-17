@@ -40,6 +40,9 @@ from src.transformation.compute_benefits import run_computation
 from src.quality.data_quality import run_quality_tests
 from src.notifications.slack_notifier import notify_pending_activities
 
+# Créer le dossier logs avant d'ouvrir le FileHandler
+(Path(__file__).parent.parent / "logs").mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
@@ -261,9 +264,6 @@ Exemples :
     )
 
     args = parser.parse_args()
-
-    # Créer le dossier logs si nécessaire
-    Path("logs").mkdir(exist_ok=True)
 
     report = run_full_pipeline(
         skip_steps=args.skip or [],
