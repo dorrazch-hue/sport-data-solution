@@ -101,6 +101,13 @@ def task_validate_commutes(**context):
     import sys
     sys.path.insert(0, "/opt/airflow")
 
+    # Synchroniser les distances max depuis Airflow Variables
+    from airflow.models import Variable
+    import src.validation.validate_commute as vc_module
+
+    vc_module.MAX_DISTANCE_WALKING_KM = float(Variable.get("MAX_DISTANCE_WALKING_KM", default_var="15.0"))
+    vc_module.MAX_DISTANCE_CYCLING_KM = float(Variable.get("MAX_DISTANCE_CYCLING_KM", default_var="25.0"))
+
     from src.validation.validate_commute import run_validation
     run_id = context["run_id"]
 
