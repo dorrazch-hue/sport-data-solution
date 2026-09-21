@@ -49,7 +49,7 @@ data/processed/
 *.key
 *.pyc
 node_modules/
-Claude outputs/
+presentation/
 
 # Artefact git filter-branch (nettoyage historique)
 .git-rewrite/
