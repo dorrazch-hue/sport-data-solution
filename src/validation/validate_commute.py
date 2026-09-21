@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from sqlalchemy.orm import Session
 from src.config import (
     GOOGLE_MAPS_API_KEY, COMPANY_ADDRESS,
-    COMMUTE_DISTANCE_LIMITS, SPORT_COMMUTE_MODES,
+    SPORT_COMMUTE_MODES,
     MAX_DISTANCE_WALKING_KM, MAX_DISTANCE_CYCLING_KM
 )
 from src.database.init_db import get_engine
@@ -196,7 +196,10 @@ def validate_employee_commute(employee: Employee) -> dict:
         result["anomaly_reason"] = "Adresse domicile manquante — validation impossible"
         return result
 
-    max_km = COMMUTE_DISTANCE_LIMITS[employee.commute_mode]
+    if employee.commute_mode == "Marche/running":
+        max_km = MAX_DISTANCE_WALKING_KM
+    else:  # Vélo/Trottinette/Autres
+        max_km = MAX_DISTANCE_CYCLING_KM
     result["max_allowed_km"] = max_km
 
     distance_km, method = get_distance_km(employee.home_address, employee.commute_mode)

@@ -225,9 +225,7 @@ def load_to_database(employees: list[Employee], engine) -> dict:
     with Session(engine) as session:
         for emp in employees:
             try:
-                existing = session.get(Employee, emp.employee_id)
-
-                # Utiliser employee_id comme clé de recherche
+                # Rechercher par employee_id (clé métier, pas PK autoincrément)
                 existing = session.query(Employee).filter_by(
                     employee_id=emp.employee_id
                 ).first()

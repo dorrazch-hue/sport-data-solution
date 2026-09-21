@@ -364,16 +364,7 @@ class DataQualitySuite:
 
     def test_benefits_activity_count_vs_eligibility(self):
         """Vérifie la cohérence entre le nombre d'activités et l'éligibilité jours bien-être."""
-        df = self._query_df(
-            f"""
-            SELECT employee_id, activity_count_year, eligible_wellness_days
-            FROM benefits_calculations
-            WHERE (eligible_wellness_days = TRUE AND activity_count_year < {WELLNESS_DAYS_THRESHOLD})
-               OR (eligible_wellness_days = FALSE AND activity_count_year >= {WELLNESS_DAYS_THRESHOLD}
-                   )
-            """
-        )
-        # Jointure sur employees pour vérifier declared_sport
+        # Jointure sur employees pour vérifier declared_sport (un non-sportif éligible=False est normal)
         df2 = self._query_df(
             f"""
             SELECT bc.employee_id, bc.activity_count_year, bc.eligible_wellness_days, e.declared_sport
