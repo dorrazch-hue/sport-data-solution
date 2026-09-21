@@ -174,6 +174,14 @@ def task_quality_tests(**context):
     import sys
     sys.path.insert(0, "/opt/airflow")
 
+    # Synchroniser les paramètres métier avec ceux utilisés dans compute_benefits
+    from airflow.models import Variable
+    import src.quality.data_quality as dq_module
+
+    dq_module.SPORT_BONUS_RATE = float(Variable.get("SPORT_BONUS_RATE", default_var="0.05"))
+    dq_module.WELLNESS_DAYS_THRESHOLD = int(Variable.get("WELLNESS_DAYS_THRESHOLD", default_var="15"))
+    dq_module.WELLNESS_DAYS_COUNT = int(Variable.get("WELLNESS_DAYS_COUNT", default_var="5"))
+
     from src.quality.data_quality import run_quality_tests
     run_id = context["run_id"]
 
