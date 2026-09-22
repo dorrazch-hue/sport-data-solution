@@ -18,7 +18,7 @@ Usage :
   python pipeline/run_pipeline.py --force-regenerate
 
   # Sauter une étape
-  python pipeline/run_pipeline.py --skip-validation
+  python pipeline/run_pipeline.py --skip validate
 
   # Uniquement les tests de qualité
   python pipeline/run_pipeline.py --only quality
@@ -113,7 +113,7 @@ def run_full_pipeline(
         if only_step and step_name != only_step:
             return False
         if step_name in skip_steps:
-            logger.info("⏭️  Étape '%s' ignorée (--skip-%s)", step_name, step_name)
+            logger.info("⏭️  Étape '%s' ignorée (--skip %s)", step_name, step_name)
             return False
         return True
 
